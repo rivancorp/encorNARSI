@@ -1,0 +1,123 @@
+#######
+#######
+
+#R1
+config t
+access-list 8 permit any
+ip nat inside source list 8 int gi 1 overload
+no ip sla 1
+ip sla 1
+ icmp-echo 8.8.8.8 source-ip 192.168.108.12
+ threshold 700
+ timeout 1000
+ frequency 2
+ exit
+!
+track 1 ip sla 1 reachability
+ exit
+!
+ip sla schedule 1 start-time now life forever
+!
+interface GigabitEthernet2
+ ip nat inside
+ ip address 10.112.0.12 255.255.255.0
+ glbp 1 ip 10.112.0.23
+ glbp 1 priority 110
+ glbp 1 timers redirect 1 603
+ glbp 1 preempt
+ glbp 1 weighting 5
+ glbp 1 load-balancing weighted
+ glbp 1 authentication md5 key-string cisco123
+ glbp 1 weighting track 1 decrement 11
+int gi 1
+ ip nat outside
+
+#R2
+config t
+access-list 8 permit any
+ip nat inside source list 8 int gi 1 overload
+no ip sla 1
+ip sla 1
+ icmp-echo 8.8.8.8 source-ip 192.168.108.22
+ threshold 700
+ timeout 1000
+ frequency 2
+ exit
+!
+track 1 ip sla 1 reachability
+ exit
+!
+ip sla schedule 1 start-time now life forever
+!
+interface GigabitEthernet2
+ip nat inside
+ ip address 10.112.0.22 255.255.255.0
+ glbp 1 ip 10.112.0.23
+ glbp 1 priority 100
+ glbp 1 timers redirect 1 603
+ glbp 1 priority 100
+ glbp 1 preempt
+ glbp 1 weighting 5
+ glbp 1 load-balancing weighted
+ glbp 1 authentication md5 key-string cisco123
+ glbp 1 weighting track 1 decrement 5
+int gi 1
+ ip nat outside
+
+
+
+Ex1.
+Here is an example Cisco CSR1000v CoPP policy that restricts ICMP traffic to packets no larger than 50 bytes, and permits only HTTP traffic to cisco.com and nba.com:
+
+config t
+ip access-list extended ACL-COPP-ICMP
+ permit icmp any any echo size 50
+ permit icmp any any echo-reply
+ deny icmp any any
+
+class-map match-any CM-COPP-ICMP
+ match access-group name ACL-COPP-ICMP
+
+policy-map PM-COPP
+ class CM-COPP-ICMP
+  police cir 100 kbps conform-action transmit exceed-action drop
+ class class-default
+  police cir 1 gbps
+
+ip access-list extended ACL-COPP-HTTP
+ permit tcp any host www.cisco.com eq www
+ permit tcp any host www.nba.com eq www
+
+class-map match-all CM-COPP-HTTP
+ match access-group name ACL-COPP-HTTP
+
+policy-map PM-COPP
+ class CM-COPP-HTTP
+  police cir 100 mbps conform-action transmit exceed-action drop
+
+control-plane
+ service-policy input PM-COPP
+
+Ex2:
+config t
+CoPP policy can be used to restrict ICMP traffic to prevent network flooding attacks, such as Ping floods. In this example, we will create a CoPP policy that allows only ICMP packets of 64 bytes or less:
+
+config t
+no ip access-list extended ACL-COPP-ICMP
+ip access-list extended ACL-COPP-ICMP
+ permit icmp any any echo size 64
+ permit icmp any any echo-reply
+ deny icmp any any
+
+class-map match-any CM-COPP-ICMP
+ match access-group name ACL-COPP-ICMP
+
+policy-map PM-COPP-ICMP
+ class CM-COPP-ICMP
+  police cir 100 kbps conform-action transmit exceed-action drop
+ class class-default
+  police cir 1 gbps
+
+control-plane
+ service-policy input PM-COPP-ICMP
+
