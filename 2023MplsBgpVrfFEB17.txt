@@ -1,0 +1,1253 @@
+
+ENCOR TASKzero: Locator/Identifier Separation Protocol:
+LISP PROTOCOL: or ANTI-BGP, Anti-VPN.
+
+@sa tatlong CSR:
+config t
+no logging console
+no ip domain lookup
+ip ssh version 1
+int gi 1
+ no shut
+ ip address dhcp
+ do sh ip int brief
+
+@allRouters:
+config t
+cdp run
+int gi 2
+cdp enable
+no shut
+int gi 3
+cdp enable
+no shut
+end
+@R2:
+conf t
+router ospf 1
+network 2.2.2.2 0.0.0.0 area 0
+network 130.0.0.2 0.0.0.0 area 0
+network 140.0.0.2 0.0.0.0 area 0
+int lo 0
+ip add 2.2.2.2 255.255.255.255
+int gi 2
+ip add 130.0.0.2 255.255.255.0
+no shut
+int gi 3
+ip add 140.0.0.2 255.255.255.0
+no shut
+end
+
+R1:
+conf t
+router ospf 1
+network 130.0.0.1 0.0.0.0 area 0
+int gi 2
+ip add 130.0.0.1 255.255.255.0
+no shut
+int lo 0
+ ip add 1.1.1.1 255.255.255.255
+end
+R3:
+conf t
+router ospf 1
+network 140.0.0.3 0.0.0.0 area 0
+int gi 3
+ip add 140.0.0.3 255.255.255.0
+no shut
+int lo 0
+ ip add 3.3.3.3 255.255.255.255
+end
+
+LISP CONFGIURATION: MAP SERVER/MAP RESOLVER.
+R2: mapserver/mapresolver: can Ping everyone:
+config t
+router lisp
+ipv4 map-server
+ipv4 map-resolver
+!
+lisp site siteR3
+eid-prefix 3.3.3.3/32
+authentication-key rivansite3
+!
+lisp site siteR1
+eid-prefix 1.1.1.1/32
+authentication-key rivansite1
+!
+ip lisp map-server
+ip lisp map-resolver
+!
+show lisp site summary
+show ip lisp map-cache
+show ip lisp database
+end
+@ETR/ITR:
+R1:
+config t
+router Lisp
+database-mapping 1.1.1.1/32 130.0.0.1 priority 1 weight 100
+ipv4 itr
+ipv4 itr map-resolver 2.2.2.2
+ipv4 etr
+ipv4 etr map-server 2.2.2.2 key rivansite1
+end
+R3:
+config t
+router Lisp
+database-mapping 3.3.3.3/32 140.0.0.3 priority 1 weight 100
+ipv4 itr
+ipv4 itr map-resolver 2.2.2.2
+ipv4 etr
+ipv4 etr map-server 2.2.2.2 key rivansite3
+end
+pin
+HOW TO PASSENCOR IN 3 WEEKS?
+1. hands-on: RSThayup/NO copy PASTE!
+2. CSR1000 + postman: Put,Patch,Delete.
+3. JSON with Python.
+"python syntax!"
+4. The Lastest September Encor Exam Accurate.: 560Q
+5. 80Q
+6. https://sandboxdnac.cisco.com/dna/home
+visit 2 minutes!
+
+R1:
+conf t
+router ospf 1
+network 130.0.0.1 0.0.0.0 area 0
+int gi 2
+ip add 130.0.0.1 255.255.255.0
+no shut
+int lo 0
+ ip add 1.1.1.1 255.255.255.255
+end
+R3:
+conf t
+router ospf 1
+network 140.0.0.3 0.0.0.0 area 0
+int gi 3
+ip add 140.0.0.3 255.255.255.0
+no shut
+int lo 0
+ ip add 3.3.3.3 255.255.255.255
+end
+@ETR/ITR:
+R1:
+config t
+router Lisp
+database-mapping 1.1.1.1/32 130.0.0.1 priority 1 weight 100
+ipv4 itr
+ipv4 itr map-resolver 2.2.2.2
+ipv4 etr
+ipv4 etr map-server 2.2.2.2 key rivansite1
+end
+R3:
+config t
+router Lisp
+database-mapping 3.3.3.3/32 140.0.0.3 priority 1 weight 100
+ipv4 itr
+ipv4 itr map-resolver 2.2.2.2
+ipv4 etr
+ipv4 etr map-server 2.2.2.2 key rivansite3
+end
+
+
+
+
+
+Task1: master VRF:
+
+There are three routers. I have also three VRFs:
+
+MGT – used for management, has RD 1:1
+ABC – has RD 2:2
+DEF – has RD 3:3
+
+
+0 – global table
+1 – VRF MGT
+2 and 22 – VRF ABC
+3 and 33 – VRF DEF
+
+@@R1:
+config t
+ip cef
+hostname R1
+!
+ip vrf ABC
+ rd 2:2
+ route-target export 2:2
+ route-target import 2:2
+!
+ip vrf DEF
+ rd 3:3
+ route-target export 3:3
+ route-target import 3:3
+!
+ip vrf MGT
+ rd 1:1
+ route-target export 1:1
+ route-target import 1:1
+!
+interface Loopback0
+ ip address 10.1.0.1 255.255.255.255
+!
+interface Loopback1
+ ip vrf forwarding MGT
+ ip address 10.1.1.1 255.255.255.255
+!
+interface Loopback2
+ ip vrf forwarding ABC
+ ip address 10.1.2.1 255.255.255.255
+!
+interface Loopback3
+ ip vrf forwarding DEF
+ ip address 10.1.3.1 255.255.255.255
+!
+interface Loopback22
+ ip vrf forwarding ABC
+ ip address 10.1.22.1 255.255.255.255
+!         
+interface Loopback33
+ ip vrf forwarding DEF
+ ip address 10.1.33.1 255.255.255.255
+!
+interface Ethernet1/0
+ ip address 192.168.12.1 255.255.255.0
+ mpls ip
+!
+router ospf 1
+ network 10.1.0.1 0.0.0.0 area 0
+ network 192.168.12.1 0.0.0.0 area 0
+!
+router bgp 1
+ no synchronization
+ bgp log-neighbor-changes
+ neighbor 10.2.0.1 remote-as 1
+ neighbor 10.2.0.1 update-source Loopback0
+ no auto-summary
+ !
+ address-family vpnv4
+  neighbor 10.2.0.1 activate
+  neighbor 10.2.0.1 send-community both
+ exit-address-family
+ !
+ address-family ipv4 vrf ABC
+  no synchronization
+  network 10.1.2.1 mask 255.255.255.255
+  network 10.1.22.1 mask 255.255.255.255
+ exit-address-family
+ !
+ address-family ipv4 vrf DEF
+  no synchronization
+  network 10.1.3.1 mask 255.255.255.255
+  network 10.1.33.1 mask 255.255.255.255
+ exit-address-family
+ !
+ address-family ipv4 vrf MGT
+  no synchronization
+  network 10.1.1.1 mask 255.255.255.255
+ exit-address-family
+ end
+ 
+@@R2:
+config t
+ip cef
+hostname R2
+!
+ip vrf ABC
+ rd 2:2
+ route-target export 2:2
+ route-target import 2:2
+!
+ip vrf DEF
+ rd 3:3
+ route-target export 3:3
+ route-target import 3:3
+!
+ip vrf MGT
+ rd 1:1
+ route-target export 1:1
+ route-target import 1:1
+!
+interface Loopback0
+ ip address 10.2.0.1 255.255.255.255
+!
+interface Loopback1
+ ip vrf forwarding MGT
+ ip address 10.2.1.1 255.255.255.255
+!
+interface Ethernet1/2
+ ip address 192.168.12.2 255.255.255.0
+ mpls ip
+!
+interface Ethernet1/1
+ ip address 192.168.23.2 255.255.255.0
+ mpls ip
+!
+router ospf 1
+ network 10.2.0.1 0.0.0.0 area 0
+ network 192.168.12.2 0.0.0.0 area 0
+ network 192.168.23.2 0.0.0.0 area 0
+!
+router bgp 1
+ no synchronization
+ bgp log-neighbor-changes
+ neighbor 10.1.0.1 remote-as 1
+ neighbor 10.1.0.1 update-source Loopback0
+ neighbor 10.3.0.1 remote-as 1
+ neighbor 10.3.0.1 update-source Loopback0
+ no auto-summary
+ !
+ address-family vpnv4
+  neighbor 10.1.0.1 activate
+  neighbor 10.1.0.1 send-community both
+  neighbor 10.1.0.1 route-reflector-client
+  neighbor 10.3.0.1 activate
+  neighbor 10.3.0.1 send-community both
+  neighbor 10.3.0.1 route-reflector-client
+ exit-address-family
+ !
+ address-family ipv4 vrf MGT
+  no synchronization
+  network 10.2.1.1 mask 255.255.255.255
+ exit-address-family
+ end
+ 
+@@@@@@@@@@@@@@@@ 
+@@R3:
+config t
+ip cef
+hostname R3
+!
+ip vrf ABC
+ rd 2:2
+ route-target export 2:2
+ route-target import 2:2
+!
+ip vrf DEF
+ rd 3:3
+ route-target export 3:3
+ route-target import 3:3
+!
+ip vrf MGT
+ rd 1:1
+ route-target export 1:1
+ route-target import 1:1
+!
+interface Loopback0
+ ip address 10.3.0.1 255.255.255.255
+!
+interface Loopback1
+ ip vrf forwarding MGT
+ ip address 10.3.1.1 255.255.255.255
+!
+interface Loopback2
+ ip vrf forwarding ABC
+ ip address 10.3.2.1 255.255.255.255
+!
+interface Loopback3
+ ip vrf forwarding DEF
+ ip address 10.3.3.1 255.255.255.255
+!
+interface Loopback22
+ ip vrf forwarding ABC
+ ip address 10.3.22.1 255.255.255.255
+!         
+interface Loopback33
+ ip vrf forwarding DEF
+ ip address 10.3.33.1 255.255.255.255
+!
+interface Ethernet1/1
+ ip address 192.168.23.3 255.255.255.0
+ mpls ip
+!
+router ospf 1
+ network 10.3.0.1 0.0.0.0 area 0
+ network 192.168.23.3 0.0.0.0 area 0
+!
+no router bgp 1
+router bgp 1
+ no synchronization
+ bgp log-neighbor-changes
+ neighbor 10.2.0.1 remote-as 1
+ neighbor 10.2.0.1 update-source Loopback0
+ no auto-summary
+ !
+ address-family vpnv4
+  neighbor 10.2.0.1 activate
+  neighbor 10.2.0.1 send-community both
+ exit-address-family
+ !
+ address-family ipv4 vrf ABC
+  no synchronization
+  network 10.3.2.1 mask 255.255.255.255
+  network 10.3.22.1 mask 255.255.255.255
+ exit-address-family
+ !
+ address-family ipv4 vrf DEF
+  no synchronization
+  network 10.3.3.1 mask 255.255.255.255
+  network 10.3.33.1 mask 255.255.255.255
+ exit-address-family
+ !
+ address-family ipv4 vrf MGT
+  no synchronization
+  network 10.3.1.1 mask 255.255.255.255
+ exit-address-family
+ end
+ 
+Task1: ETO SILA R1,R2,R3 PAG WALA PA GINAWA:
+
+R1#show ip route ospf
+
+      10.0.0.0/32 is subnetted, 7 subnets
+O        10.2.0.1 [110/11] via 192.168.12.2, 00:00:09, Ethernet1/0
+O        10.3.0.1 [110/21] via 192.168.12.2, 00:00:09, Ethernet1/0
+O     192.168.23.0/24 [110/20] via 192.168.12.2, 00:00:09, Ethernet1/0
+
+
+R1#sh ip ro vrf MGT
+      10.0.0.0/32 is subnetted, 2 subnets
+B        10.2.1.1 [200/0] via 10.2.0.1, 00:01:35
+B        10.3.1.1 [200/0] via 10.3.0.1, 00:01:35
+
+
+R1#sh ip ro vrf ABC
+
+      10.0.0.0/32 is subnetted, 2 subnets
+B        10.3.2.1 [200/0] via 10.3.0.1, 00:19:06
+B        10.3.22.1 [200/0] via 10.3.0.1, 00:19:06
+
+
+R1#sh ip bgp vpnv4 all sum 
+BGP router identifier 10.1.33.1, local AS number 1
+BGP table version is 13, main routing table version 13
+6 network entries using 912 bytes of memory
+6 path entries using 456 bytes of memory
+3/3 BGP path/bestpath attribute entries using 444 bytes of memory
+1 BGP rrinfo entries using 24 bytes of memory
+3 BGP extended community entries using 72 bytes of memory
+0 BGP route-map cache entries using 0 bytes of memory
+0 BGP filter-list cache entries using 0 bytes of memory
+BGP using 1908 total bytes of memory
+BGP activity 6/0 prefixes, 6/0 paths, scan interval 60 secs
+
+Neighbor        V           AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State/PfxRcd
+10.2.0.1        4            1      30      26       13    0    0 00:19:53        6
+R1#
+
+R1#sh ip bg vpnv4 vrf MGT
+BGP table version is 13, local router ID is 10.1.33.1
+Status codes: s suppressed, d damped, h history, * valid, > best, i - internal, 
+              r RIB-failure, S Stale, m multipath, b backup-path, f RT-Filter, 
+              x best-external, a additional-path, c RIB-compressed, 
+Origin codes: i - IGP, e - EGP, ? - incomplete
+RPKI validation codes: V valid, I invalid, N Not found
+
+Route Distinguisher: 1:1 (default for vrf MGT)
+ *>  10.1.1.1/32      0.0.0.0                  0         32768 i
+ *>i 10.2.1.1/32      10.2.0.1                 0    100      0 i
+ *>i 10.3.1.1/32      10.3.0.1                 0    100      0 i
+ 
+R1#sh ip bg vpnv4 vrf ABC
+BGP table version is 13, local router ID is 10.1.33.1
+Status codes: s suppressed, d damped, h history, * valid, > best, i - internal, 
+              r RIB-failure, S Stale, m multipath, b backup-path, f RT-Filter, 
+              x best-external, a additional-path, c RIB-compressed, 
+Origin codes: i - IGP, e - EGP, ? - incomplete
+RPKI validation codes: V valid, I invalid, N Not found
+
+     Network          Next Hop            Metric LocPrf Weight Path
+Route Distinguisher: 2:2 (default for vrf ABC)
+ *>  10.1.2.1/32      0.0.0.0                  0         32768 i
+ *>  10.1.22.1/32     0.0.0.0                  0         32768 i
+ *>i 10.3.2.1/32      10.3.0.1                 0    100      0 i
+ *>i 10.3.22.1/32     10.3.0.1                 0    100      0 i
+ 
+R1#sh ip bg vpnv4 vrf DEF
+R1#sh ip bg vpnv4 vrf DEF
+BGP table version is 13, local router ID is 10.1.33.1
+Status codes: s suppressed, d damped, h history, * valid, > best, i - internal, 
+              r RIB-failure, S Stale, m multipath, b backup-path, f RT-Filter, 
+              x best-external, a additional-path, c RIB-compressed, 
+Origin codes: i - IGP, e - EGP, ? - incomplete
+RPKI validation codes: V valid, I invalid, N Not found
+
+     Network          Next Hop            Metric LocPrf Weight Path
+Route Distinguisher: 3:3 (default for vrf DEF)
+ *>  10.1.3.1/32      0.0.0.0                  0         32768 i
+ *>  10.1.33.1/32     0.0.0.0                  0         32768 i
+ *>i 10.3.3.1/32      10.3.0.1                 0    100      0 i
+ *>i 10.3.33.1/32     10.3.0.1                 0    100      0 i
+ 
+ 
+R3#sh ip ro vrf ABC
+
+      10.0.0.0/32 is subnetted, 4 subnets
+B        10.1.2.1 [200/0] via 10.1.0.1, 00:02:37
+B        10.1.22.1 [200/0] via 10.1.0.1, 00:02:37
+C        10.3.2.1 is directly connected, Loopback2
+C        10.3.22.1 is directly connected, Loopback22
+
+sh ip ro vrf DEF
+      10.0.0.0/32 is subnetted, 4 subnets
+B        10.1.3.1 [200/0] via 10.1.0.1, 00:03:19
+B        10.1.33.1 [200/0] via 10.1.0.1, 00:03:19
+C        10.3.3.1 is directly connected, Loopback3
+C        10.3.33.1 is directly connected, Loopback33
+
+R1#sh ip bg vpnv4 vrf MGT
+
+Route Distinguisher: 1:1 (default for vrf MGT)
+ *>  10.1.1.1/32      0.0.0.0                  0         32768 i
+ *>i 10.2.1.1/32      10.2.0.1                 0    100      0 i
+ *>i 10.3.1.1/32      10.3.0.1                 0    100      0 i
+ 
+R1#sh ip bg vpnv4 vrf ABC
+
+     Network          Next Hop            Metric LocPrf Weight Path
+Route Distinguisher: 2:2 (default for vrf ABC)
+ *>  10.1.2.1/32      0.0.0.0                  0         32768 i
+ *>  10.1.22.1/32     0.0.0.0                  0         32768 i
+ *>i 10.3.2.1/32      10.3.0.1                 0    100      0 i
+ *>i 10.3.22.1/32     10.3.0.1                 0    100      0 i
+ 
+
+R1#sh ip bg vpnv4 vrf DEF
+
+     Network          Next Hop            Metric LocPrf Weight Path
+Route Distinguisher: 3:3 (default for vrf DEF)
+ *>  10.1.3.1/32      0.0.0.0                  0         32768 i
+ *>  10.1.33.1/32     0.0.0.0                  0         32768 i
+ *>i 10.3.3.1/32      10.3.0.1                 0    100      0 i
+ *>i 10.3.33.1/32     10.3.0.1                 0    100      0 i
+ 
+TASK2: LETS GET TO WORK.
+r1:
+show ip route vrf ABC
+B        10.3.2.1 [200/0] via 10.3.0.1, 00:07:47
+B        10.3.22.1 [200/0] via 10.3.0.1, 00:07:47
+config t
+ip vrf ABC
+ route-target import 3:3
+ do clear ip bgp *
+end
+
+R1#show ip route vrf ABC
+B        10.1.3.1 is directly connected (DEF), 00:00:06, Loopback3
+C        10.1.22.1 is directly connected, Loopback22
+B        10.1.33.1 is directly connected (DEF), 00:00:06, Loopback33
+B        10.3.2.1 [200/0] via 10.3.0.1, 00:00:06
+B        10.3.3.1 [200/0] via 10.3.0.1, 00:00:06
+B        10.3.22.1 [200/0] via 10.3.0.1, 00:00:06
+B        10.3.33.1 [200/0] via 10.3.0.1, 00:00:06
+
+But, DEF is still the same:
+
+R1#show ip route vrf DEF
+C        10.1.33.1 is directly connected, Loopback33
+B        10.3.3.1 [200/0] via 10.3.0.1, 00:04:05
+B        10.3.33.1 [200/0] via 10.3.0.1, 00:04:05
+
+R1#ping vrf ABC 10.3.2.1 
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.3.2.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 1/1/1 ms
+R1#ping vrf ABC 10.3.22.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.3.22.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 1/1/2 ms
+R1#ping vrf ABC 10.3.3.1 
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.3.3.1, timeout is 2 seconds:
+..... 
+Success rate is 0 percent (0/5)
+R1#ping vrf ABC 10.1.3.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.1.3.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+
+Task3: Ipasok mga ABC sa DEF:
+R1:
+R1#show ip route vrf DEF
+B        10.3.3.1 [200/0] via 10.3.0.1, 00:17:36
+B        10.3.33.1 [200/0] via 10.3.0.1, 00:17:36
+config t
+ip vrf DEF
+ route-target import 2:2
+ do clear ip bgp * soft
+ do sr vrf DEF bgp
+      10.0.0.0/32 is subnetted, 8 subnets
+B        10.1.2.1 is directly connected (ABC), 00:01:31, Loopback2
+B        10.1.22.1 is directly connected (ABC), 00:01:31, Loopback22
+B        10.3.2.1 [200/0] via 10.3.0.1, 00:01:31
+B        10.3.3.1 [200/0] via 10.3.0.1, 00:01:31
+B        10.3.22.1 [200/0] via 10.3.0.1, 00:01:31
+B        10.3.33.1 [200/0] via 10.3.0.1, 00:01:31 
+
+Task4: lets attack R3:
+r3:
+R3#sr vrf ABC bgp
+B        10.1.2.1 [200/0] via 10.1.0.1, 00:06:14
+B        10.1.22.1 [200/0] via 10.1.0.1, 00:06:14
+R3#sr vrf DEF bgp
+
+      10.0.0.0/32 is subnetted, 4 subnets
+B        10.1.3.1 [200/0] via 10.1.0.1, 00:06:40
+B        10.1.33.1 [200/0] via 10.1.0.1, 00:06:40
+config t
+ip vrf ABC
+ route-target import 3:3
+ do clear ip bgp *
+ do sr vrf ABC bgp
+B        10.1.2.1 [200/0] via 10.1.0.1, 00:00:57
+B        10.1.3.1 [200/0] via 10.1.0.1, 00:00:57
+B        10.1.22.1 [200/0] via 10.1.0.1, 00:00:57
+B        10.1.33.1 [200/0] via 10.1.0.1, 00:00:57
+B        10.3.3.1 is directly connected (DEF), 00:00:57, Loopback3
+B        10.3.33.1 is directly connected (DEF), 00:00:57, Loopback33
+
+R3:
+config t
+ip vrf DEF
+ route-target import 2:2
+ do clear ip bgp *
+ do sr vrf DEF bgp
+B        10.1.2.1 [200/0] via 10.1.0.1, 00:00:06
+B        10.1.3.1 [200/0] via 10.1.0.1, 00:00:06
+B        10.1.22.1 [200/0] via 10.1.0.1, 00:00:06
+B        10.1.33.1 [200/0] via 10.1.0.1, 00:00:06
+B        10.3.2.1 is directly connected (ABC), 00:00:06, Loopback2
+B        10.3.22.1 is directly connected (ABC), 00:00:06, Loopback22
+
+TASK5: OTHER WAYS, TO IMPORT:  
+FOR R1, WE WILL IMPORT ONLY 10.3.33.0/24 AND not 10.3.3.0/24
+
+r1:
+config t
+ip vrf ABC
+ route-target import 3:3
+ import map ABC-IMPORT-MAP
+!
+ip extcommunity-list standard EC_ABC permit rt 2:2
+ip extcommunity-list standard EC_DEF permit rt 3:3
+!
+ip prefix-list IMPORT_TO_ABC_FROM_DEF seq 10 permit 10.3.33.0/24 le 32
+!
+route-map ABC-IMPORT-MAP permit 10
+ match extcommunity EC_ABC
+!
+route-map ABC-IMPORT-MAP permit 20
+ match ip address prefix-list IMPORT_TO_ABC_FROM_DEF
+ match extcommunity EC_DEF
+ exit
+ do clear ip bgp *
+
+R1(config)#do sr vrf ABC bgp
+      10.0.0.0/32 is subnetted, 5 subnets
+B        10.3.2.1 [200/0] via 10.3.0.1, 00:00:03
+B        10.3.22.1 [200/0] via 10.3.0.1, 00:00:03
+B        10.3.33.1 [200/0] via 10.3.0.1, 00:00:03
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+MPLS supah lab:
+
+R4-PEa:
+configure terminal
+ hostname R4-PEa
+ enable secret pass
+ no ip domain-lookup
+ logging console
+ alias exec bp show ip int brief | ex una
+ alias exec sr show ip route
+ alias exec sp show ip protocols
+ ip subnet-zero
+ int lo 0
+   ip address 172.16.1.4 255.255.255.255
+end
+
+***
+
+R3-Pcore:
+enable
+configure terminal
+ hostname R3-PCoreA
+ enable secret pass
+ no ip domain-lookup
+ logging console
+ ip subnet-zero
+ int lo 0
+   ip address 172.16.1.3 255.255.255.255
+   no shut
+end
+
+***
+
+R2:
+enable
+configure terminal
+ hostname R2-PCoreB
+ enable secret pass
+ no ip domain-lookup
+ logging console
+ ip subnet-zero
+ int lo 0
+   ip address 172.16.1.2 255.255.255.255
+   no shut
+end
+
+
+****
+
+R1PEz:
+enable
+configure terminal
+ hostname R1-PEz
+ enable secret pass
+ no ip domain-lookup
+ logging console
+ ip subnet-zero
+ int lo 0
+   ip address 172.16.1.1 255.255.255.255
+   no shut
+end
+
+**********
+
+***
+
+D1-pnbA:
+enable
+configure terminal
+ hostname D1-PNBa
+ enable secret pass
+ no ip domain-lookup
+ logging console
+ alias exec bp show ip int brief | ex una
+ alias exec sr show ip route
+ alias exec sp show ip protocols
+ ip subnet-zero
+ int Ethernet1/1
+   ip address 10.1.1.1 255.255.255.252
+   no shut
+
+***
+
+***
+
+isp1-pnbB:
+enable
+configure terminal
+ hostname PNBb
+ enable secret pass
+ no ip domain-lookup
+ logging console
+ alias exec bp show ip int brief | ex una
+ alias exec sr show ip route
+ alias exec sp show ip protocols
+ ip subnet-zero
+ int Eth 1/3
+   ip address 10.1.1.5 255.255.255.252
+   no shut
+
+***
+
+D2-BPIa:
+enable
+configure terminal
+ hostname D2-BPIa
+ enable secret pass
+ no ip domain-lookup
+ logging console
+ ip subnet-zero
+ int Ethernet1/1
+   ip address 10.1.1.1 255.255.255.252
+   no shut
+
+***
+
+ISp2-BPIB:
+configure terminal
+ hostname I2BPIb
+ enable secret pass
+ no ip domain-lookup
+ logging console
+ alias exec bp show ip int brief | ex una
+ alias exec sr show ip route
+ alias exec sp show ip protocols
+ ip subnet-zero
+ int  Eth 1/3
+   ip address 10.1.1.5 255.255.255.252
+   no shut
+
+*********************************************
+
+Step0: Enable Basic OSPF routing on Core:
+
+
+R4-Pea
+config t
+ no router ospf 1
+ router ospf 1
+  network 172.16.0.0 0.0.255.255 area 0
+  network 10.1.1.8 0.0.0.3 area 0
+
+R3-PCore
+config t
+ no router ospf 1
+ router ospf 1
+  network 172.16.0.0 0.0.255.255 area 0
+  network 10.1.1.8 0.0.0.3 area 0
+  network 10.1.1.4 0.0.0.3 area 0
+
+R2-PCoreb
+config t
+ no router ospf 1
+ router ospf 1
+  network 172.16.0.0 0.0.255.255 area 0
+  network 10.1.1.0 0.0.0.3 area 0
+  network 10.1.1.4 0.0.0.3 area 0
+
+R1:Pez
+config t
+ no router ospf 1
+ router ospf 1
+  network 172.16.0.0 0.0.255.255 area 0
+  network 10.1.1.0 0.0.0.3 area 0
+
+STEP1: BASIC MPLS CONFIGURATION AT TELCO core:
+        datacenter eng/core/wan/telco eng.
+          highly paid syet!
+
+R4:PEa
+config t
+ ip cef
+ mpls ip
+  int Ethernet1/2
+    mpls ip
+    mpls label protocol ldp
+    !mpls mtu override 1512 
+***
+R3:P:
+config t
+ ip cef
+ mpls ip
+  int Ethernet1/1
+    mpls ip
+    mpls label protocol ldp
+    !mpls mtu override 1512
+  int Ethernet1/2
+    mpls ip
+    mpls label protocol ldp
+    !mpls mtu override 1512
+****
+***
+R2:P:
+config t
+ ip cef
+ mpls ip
+  int Ethernet1/1
+    mpls ip
+    mpls label protocol ldp
+    !mpls mtu override 1512
+  int Ethernet1/2
+    mpls ip
+    mpls label protocol ldp
+    !mpls mtu override 1512
+****
+R1-1:PEz
+config t
+ ip cef
+ mpls ip
+  int Ethernet1/0
+    mpls ip
+    mpls label protocol ldp
+    !mpls mtu override 1512
+
+How to check:
+R2P#show mpls ldp neighbor (lib)
+    Peer LDP Ident: 172.16.1.1:0; Local LDP Ident 172.16.1.2:0
+        TCP connection: 172.16.1.1.646 - 172.16.1.2.23066
+        State: Oper; Msgs sent/rcvd: 8/8; Downstream
+        Up time: 00:00:53
+        LDP discovery sources:
+          FastEthernet1/1, Src IP addr: 192.168.1.1
+        Addresses bound to peer LDP Ident:
+          192.168.1.1     172.16.1.1      
+    Peer LDP Ident: 172.16.1.3:0; Local LDP Ident 172.16.1.2:0
+        TCP connection: 172.16.1.3.41657 - 172.16.1.2.646
+        State: Oper; Msgs sent/rcvd: 8/8; Downstream
+        Up time: 00:00:40
+        LDP discovery sources:
+          FastEthernet1/2, Src IP addr: 192.168.1.6
+        Addresses bound to peer LDP Ident:
+          192.168.1.6     172.16.1.3      
+R2P#
+
+r2P#show mpls forwarding-table (fib)
+Local  Outgoing    Prefix            Bytes tag  Outgoing   Next Hop    
+tag    tag or VC   or Tunnel Id      switched   interface              
+16     Pop tag     172.16.1.1/32     0          Fa1/1      192.168.1.1  
+17     Pop tag     172.16.1.3/32     0          Fa1/2      192.168.1.6  
+SW2P#
+
+r2P#show mpls ldp bindings (lfib)
+  tib entry: 172.16.1.1/32, rev 2
+        local binding:  tag: 16
+        remote binding: tsr: 172.16.1.1:0, tag: imp-null
+        remote binding: tsr: 172.16.1.3:0, tag: 16
+  tib entry: 172.16.1.2/32, rev 6
+        local binding:  tag: imp-null
+        remote binding: tsr: 172.16.1.1:0, tag: 17
+        remote binding: tsr: 172.16.1.3:0, tag: 17
+  tib entry: 172.16.1.3/32, rev 4
+        local binding:  tag: 17
+        remote binding: tsr: 172.16.1.1:0, tag: 16
+        remote binding: tsr: 172.16.1.3:0, tag: imp-null
+  tib entry: 192.168.1.0/30, rev 8
+        local binding:  tag: imp-null
+        remote binding: tsr: 172.16.1.1:0, tag: imp-null
+        remote binding: tsr: 172.16.1.3:0, tag: 18
+
+r2P#show ip route (routing table)
+     172.16.0.0/32 is subnetted, 3 subnets
+O       172.16.1.1 [110/2] via 192.168.1.1, 00:15:15, FastEthernet1/1
+O       172.16.1.3 [110/2] via 192.168.1.6, 00:15:15, FastEthernet1/2
+C       172.16.1.2 is directly connected, Loopback0
+     192.168.1.0/30 is subnetted, 2 subnets
+C       192.168.1.0 is directly connected, FastEthernet1/1
+C       192.168.1.4 is directly connected, FastEthernet1/2
+
+STEP2: VRF CONFIGURATION:
+  virtual route forwarder: "Virtual/logical Router"
+  allows you to have overlapping VPN networks
+
+R4:PE_a
+config t
+ ip vrf clientBDOa
+   rd 999:1
+   route-target 64999:1
+ ip vrf clientBPIa
+   rd 999:2
+   route-target 64999:2
+ ip vrf clientPNBa
+   rd 999:3
+   route-target 64999:3 
+   exit
+***
+R1:pez
+config t
+ ip vrf clientBDOb
+  rd 999:1
+  route-target 64999:1
+ ip vrf clientBPIb
+  rd 999:2
+  route-target 64999:2
+ ip vrf clientPNBb
+  rd 999:3
+  route-target 64999:3
+  exit
+**********
+R4-PEa#show ip vrf
+  Name                             Default RD          Interfaces
+  clientBDOa                       999:1               
+  clientBPIa                       999:2               
+  clientPNBa                       999:3               
+
+R1-PEz#show ip vrf
+  Name                             Default RD          Interfaces
+  clientBDOb                       999:1               
+  clientBPIb                       999:2               
+  clientPNBb                       999:3               
+SW3PEz#
+
+STEP3: CONFIGURING VRF INTERFACES ON PE ROUTERS:
+
+R4:PEa
+config t
+ int Ethernet1/1
+   ip vrf forwarding clientBPIa
+   ip address 10.1.1.2 255.255.255.252
+   no shut
+ int Ethernet1/0
+   ip vrf forwarding clientPNBa
+   ip address 10.1.1.2 255.255.255.252
+   no shut
+end
+***
+R1:PEz: 
+config t
+ int Ethernet1/2
+  ip vrf forwarding clientBPIb
+  ip address 10.1.1.6 255.255.255.252
+  no shut
+ int Ethernet1/1
+  ip vrf forwarding clientPNBb
+  ip address 10.1.1.6 255.255.255.252
+  no shut
+
+R1-PEz#bp
+Interface                  IP-Address      OK? Method Status                Protocol
+Ethernet1/0                10.1.1.1        YES NVRAM  up                    up      
+Ethernet1/1                10.1.1.6        YES manual up                    up      
+Ethernet1/2                10.1.1.6        YES manual up                    up      
+Ethernet1/3                209.9.9.1       YES NVRAM  up                    up      
+Loopback0                  172.16.1.1      YES manual up                    up   
+
+Make sure Real routers, can ping Virtual Routers!
+
+STEP 4: MP-BGP configuration MultiProtocol BGP
+
+BGP (handles 32bits:normal packet) 
+vs mBGP(multi Protocol BGP = 96bits= 32 + 64bits RD)
+
+R4:PEa
+config t
+ no router bgp 64999
+ router bgp 64999
+  !kill normal BGP, enable mBGP
+  no bgp default ipv4-unicast
+  neighbor 172.16.1.1 remote-as 64999
+  neighbor 172.16.1.1 update-source lo0
+  address-family vpnv4
+  !standard BGP config, but wont run (-:
+  neighbor 172.16.1.1 activate
+  neighbor 172.16.1.1 send-community both
+  exit-address-family
+  !activate the neigbor and exchange vpnv4 routes(32+64)
+
+R1:PEz peering with Lo of R2!
+config t
+ no router bgp 64999
+ router bgp 64999
+  no bgp default ipv4-unicast
+  !disables IPv4 routing to handle VPN routes
+  neighbor 172.16.1.4 remote-as 64999
+  neighbor 172.16.1.4 update-source lo0
+  !standard BGP config, but wont run (-:
+  address-family vpnv4
+  neighbor 172.16.1.4 activate
+  neighbor 172.16.1.4 send-community both
+  exit-address-family
+  !activate the neigbor and exchange vpnv4 routes(32+64)
+
+
+
+
+
+STEP5: INDIVIDUAL VIRTUAL/LOGICAL ROUTER VRF CONFIGURATION.
+
+
+LOGICAL ROUTER OF PNB = clientPNBa/b
+R4:PEa
+config t
+ router eigrp 90
+  address-family ipv4 vrf clientPNBa
+  autonomous-system 90
+  network 10.0.0.0
+  no auto-summary
+  exit
+***
+R1:PeZ:
+config t
+  router eigrp 90
+   address-family ipv4 vrf clientPNBb
+   autonomous-system 90
+   network 10.0.0.0
+   no auto-summary
+   exit
+   
+LOGICAL ROUTER OF BPI = clientBPIa/b
+R4:PEa
+config t
+ router ospf 69 vrf clientBPIa
+ network 0.0.0.0 0.0.0.0 area 0
+ exit
+***
+R1-:PeZ
+config t
+ router ospf 69 vrf clientBPIb
+  network 0.0.0.0 0.0.0.0 area 0
+  exit
+end
+
+STEP6: ROUTE REDISTRIBUTIONS:
+
+RIP - mBGP-RIP/EIGRP-mBGP -EIGRP/OSPF - mBGP -OSPF/
+
+
+7.2:EIGRP-mBGP -EIGRP
+
+R4:PEa
+config t
+ router bgp 64999
+  address-family ipv4 vrf clientPNBa
+  redistribute eigrp 90 metric 1
+  exit
+ router eigrp 90
+  address-family ipv4 vrf clientPNBa
+   autonomous-system 90
+   network 10.0.0.0
+   no auto-summary
+   redistribute bgp 64999 metric 100000 10 1 255 1512
+   !seed metric,sh int fa1/2      bw  de/10 load rely mtu
+   exit-address-family
+***
+R1:PEz
+config t
+ router bgp 64999
+  address-family ipv4 vrf clientPNBb
+  redistribute eigrp 90 metric 1
+  exit
+ router eigrp 90
+  address-family ipv4 vrf clientPNBb
+   autonomous-system 90
+   network 10.0.0.0
+   no auto-summary
+   redistribute bgp 64999 metric 100000 10 1 255 1512
+   exit-address-family
+
+
+OSPF - mBGP -OSPF
+R4:PEa
+config t
+ router bgp 64999
+  address-family ipv4 vrf clientBPIa
+  no redistribute ospf 1
+  redistribute ospf 69
+  no auto-summary
+  exit
+ router ospf 69 vrf clientBPIa
+  redistribute bgp 64999 metric-type 1 subnets
+  network 0.0.0.0 0.0.0.0 area 0
+exit
+***
+R1:PEz
+config t
+ router bgp 64999
+  address-family ipv4 vrf clientBPIb
+  no redistribute ospf 1
+  redistribute ospf 69
+  no auto-summary
+  exit
+ router ospf 69 vrf clientBPIb
+  redistribute bgp 64999 metric-type 1 subnets
+  network 0.0.0.0 0.0.0.0 area 0
+exit
+
+**** PASTE THE EIGRP CONFIGS AGAIN: maybe ************
+
+STEP7.: 
+IGNORE LATER NA TO!!!!!!!!!
+IGP CONFIGURATION ON CLINETS: PE engineers talk with CE eng.
+CE engineers will do this!
+
+****
+On all PNB(eigrp) routers:
+config t
+ router eigrp 90
+  network 10.0.0.0
+  no auto-summary
+****
+On all BPI(ospf) routers:
+config t
+ no router ospf 1
+ router ospf 69
+  network 0.0.0.0 0.0.0.0 area 0
+********************************
+
+@@@@@@ NEXUSSS  @@@@@@@@@@@
+
+task11: why CCNP/Datacenter LOVE nexus: = turn Back Time!
+show checkpoint summary 
+
+task12: enabling nexus feaures:
+show feature
+config t
+feature ospf
+feature nv overlay
+feature bgp
+feature interface-vlan
+feature vn-segment-vlan-based
+system jumbomtu 9216
+end
+copy run start
+
+TASK13: Nexus COre OSPF config:
+@NexusONE
+config t
+router ospf 10
+int e1/1
+ no switchport
+ ip address 100.1.1.1/30
+ ip router ospf 10 area 0
+ no shutdown
+ exit
+Int loopback 0
+ ip address 10.10.10.10/32
+ ip router ospf 10 area 0
+exit
+vlan 50
+ vn-segment 5000
+exit
+interface eth 1/5-6
+ switchport
+ switchport access vlan 50
+ exit
+Interface Nve 1
+ no shutdown
+ source-interface loopback 0
+ member vni 5000
+  ingress-replication protocol static
+    peer-ip 20.20.20.20
+  exit
+@@@n9k2
+config t
+feature ospf
+feature nv overlay
+feature vn-segment-vlan-based
+system jumbomtu 9216
+!
+router ospf 10
+!
+interface eth 1/1
+ no switchport
+ ip address 100.1.1.2/30
+ ip router ospf 10 area 0
+ no shut
+interface loopback0
+ ip address 20.20.20.20/32
+ ip router ospf 10 area 0
+!
+vlan 50
+ vn-segment 5000
+
+interface ethernet 1/5-6
+  switchport
+  switchport access vlan 50
+  no shutdown
+
+interface nve 1
+  no shutdown
+  source-interface loopback 0
+  member vni 5000
+   ingress-replication protocol static
+     peer-ip 10.10.10.10
+	 exit
+
+
+
+
+
+
+
+
+
