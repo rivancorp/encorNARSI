@@ -24,13 +24,13 @@ config t
 hostname D2
 no logging console
 no ip domain-lookup
-spanning-tree vlan 1-100 root secondary
+spanning-tree vlan ______ root _____________
 
  
 task6.2: encorCCNP: trunk lahat:
 
 RST:
-d1:
+d1:/d2
 config t
 Int Range e0/0-3, e1/2-3
   switchport trunk encap Dot1Q
@@ -57,8 +57,8 @@ ip dhcp pool vlan10
 !
 D2:
 CONFIG T
-ip dhcp excluded-add 10.2.1.1 10.2.1.200
-ip dhcp excluded-add 10.2.1.250 10.2.1.254
+ip dhcp excluded-add ________  ________
+ip dhcp excluded-add ________  ________
 !
 ip dhcp pool vlan10
   network 10.2.1.0 255.255.255.0
@@ -91,8 +91,8 @@ R4:
 config t
 router eigrp 100
 no auto-summary
-network 10.1.4.8 0.0.0.3
-network 10.1.4.4 0.0.0.3
+network ________ 0.0.0.__
+network ________ 0.0.0.__
 end
 
 
@@ -108,11 +108,11 @@ network 192.168.1.128 0.0.0.31
 D2#
 config t
 router eigrp CCNPENARSI
-address-family ipv4 unicast autonomous-system 100
-network 10.1.4.8 0.0.0.3 
-network 10.2.1.0 0.0.0.255
-network 10.2.2.0 0.0.0.255
-network 192.168.1.128 0.0.0.31
+address-family _____ ________ ___  ____
+network __________  _________
+network __________  _________
+network __________  _________
+network __________  _________
 
 D        10.2.2.0/24 [90/281856] via 10.1.4.10, 00:02:32, 
                      [90/281856] v
@@ -123,10 +123,10 @@ config t
 int lo 0
 ip add 3.3.3.3 255.255.255.255
 router ospf 1
-router-id 3.3.3.3
-network 3.3.3.3 0.0.0.0 area 0
-network 10.1.1.4 0.0.0.3 area 0
-network 10.1.1.8 0.0.0.3 area 34
+router-id _______
+network _______ _______ area __
+network _______ _______ area __
+network _______ _______ area __
 do sh ip protocol
 @@2:
 config t
@@ -153,8 +153,8 @@ int lo 0
 ip add 1.1.1.1 255.255.255.255
 router ospf 1
 router-id 1.1.1.1
-network 1.1.1.1 0.0.0.0 area 12
-network 10.1.1.0 0.0.0.3 area 12
+network _______ _______ area __
+network _______ _______ area __
 
 
 do sh ip protocol
@@ -176,13 +176,13 @@ config t
 no router bgp 1
 router bgp 1
 bgp log-neighbor-changes
-neighbor 209.9.9.3 Remote-as 3 
-neighbor 207.7.7.2 Remote-as 2
+neighbor _________ remote-as __
+neighbor _________ remote-as __
 neighbor 208.8.8.4 Remote-as 45
 network 10.1.1.0 Mask 255.255.255.252
-network 207.7.7.0 mask 255.255.255.0
-network 209.9.9.0 mask 255.255.255.0
-network 208.8.8.0 mask 255.255.255.0
+network __________ mask __________
+network __________ mask __________
+network __________ mask __________
 do sh ip bgp summary
 
 @@Isp3:
@@ -206,10 +206,10 @@ end
 config t
 router bgp 2
 bgp log-neighbor-changes
-neighbor 24.2.4.4 remote-as 45
-neighbor 25.2.5.5 remote-as 45
-neighbor 32.3.2.3 remote-as 3
-neighbor 207.7.7.1 remote-as 1
+neighbor _________ remote-as __
+neighbor _________ remote-as __
+neighbor _________ remote-as __
+neighbor _________ remote-as __
 network 22.22.22.22 mask 255.255.255.255
 network 24.2.4.0 mask 255.255.255.0
 network 25.2.5.0 mask 255.255.255.0
@@ -258,7 +258,7 @@ TASK11: pUT bgp routes in OSPF:
 R1:
 config t
 router ospf 1
-default-information Originate
+_________________  _________
 @r4
 ping 8.8.8.8
 
@@ -266,7 +266,7 @@ Task12: Route Redistribute OSPF Routers Inside EIGRP=100
 R4:
 config t
 router eigrp 100
-Redistribute ospf 1 metric 10000 100 255 1 1500
+Redistribute ospf __ metric _______  __ __  __ ____
 end
 @d1/d2:
 sh ip route eigrp
@@ -274,7 +274,7 @@ Task13: REdistribute EIGRP routes in OSPF 1
 R4:
 config t
 router ospf 1
- redistribute eigrp 100 subnets
+ __________  ___  ___  _____
 @r3:
 sh ip route ospf
 O e2 x 6
@@ -329,6 +329,17 @@ route-map RMHOPD2 permit 20
  int vlan 10
   ip policy route-map RMHOPD2
 end
+
+student task: config D2 so that it will
+tell p2 to use d1 instead.
+
+___________________________
+___________________________
+___________________________
+___________________________
+___________________________
+___________________________
+
 
 OSPF MASTERY: 3 TO 4 LABS THIS 2024:
 
@@ -770,10 +781,11 @@ O IA     4.4.6.0/24 [110/31] via 10.1.1.2, 00:02:40, Ethernet1/0
 
 so In R3(ABR) we do:
 
+LALABOS TO SA EXAM MO THIS 2024!!!!!!!
 r3:
 config t
 router ospf 1
- area 34 range 4.4.4.0 255.255.252.0
+ area 34 range 4._._._ 255.255.___.__
 !
 
 R1#sr os | inc 4.4
