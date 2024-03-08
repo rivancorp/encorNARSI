@@ -390,7 +390,7 @@ config t
 int e1/1
  ip ospf priority 255
 int e1/2
- ip ospf priority 255
+ ip _____ ____  ___
 end
 
 @r2:
@@ -2134,9 +2134,9 @@ B   B22::1/128 [20/0]
 	    !creating a tunnel for the ipv6 connection of router 3 and router 4
 			no ip address
 			ipv6 address 2026::34:2/122
-			tunnel source lo4
-			tunnel destination 3.3.3.3
-			tunnel mode ipv6ip
+			tunnel source _____
+			tunnel destination ___________
+			tunnel mode _____
 			end
 			
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2161,11 +2161,11 @@ B   B22::1/128 [20/0]
 		ipv6 router ospf 6
 			router-id 2.2.2.2
 		int lo2
-			ipv6 ospf 6 area 0
+			____ ____  __  ____ __
 		int e1/1
-			ipv6 ospf 6 area 0
+			____ ____  __  ____ __
 		int e1/2
-			ipv6 ospf 6 area 12
+			____ ____  __  ____ __
 			end
 @R3
 	conf t
@@ -2186,7 +2186,7 @@ B   B22::1/128 [20/0]
 		int lo4
 			ipv6 ospf 6 area 34
 		interface Tunnel34
-			ipv6 ospf 6 area 34
+			____ ____  __  ____ __
 			end
 ####################################################################################################
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!!TUNNELING!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2335,15 +2335,15 @@ router bgp 1
 			eigrp router-id 2.2.2.2
 			no shut
 		int lo1
-			ipv6 eigrp 10
+			___ ______ __
 		int e1/1
-			ipv6 eigrp 10
+			___ ______ __
 		int vlan 10
-			ipv6 eigrp 10
+			___ ______ __
 		int vlan 20
-			ipv6 eigrp 10
+			___ ______ __
 		int vlan 200
-			ipv6 eigrp 10
+			___ ______ __
 			end
 			
 			
