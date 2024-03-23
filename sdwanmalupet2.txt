@@ -1,0 +1,405 @@
+﻿admin
+eve for webconsole
+
+1st config: cloud:
+
+conf t
+hostname cloud
+int lo0
+ip add 8.8.8.8 255.255.255.255
+exit
+int vlan 1
+no shut
+ip add 100.0.0.254 255.255.255.0
+end
+
+router bgp 65001
+no synchro
+bgp log-neighbor-changes
+network 8.8.8.8 mask 255.255.255.255
+network 100.0.0.0 mask 255.255.255.0
+neighbor 100.0.0.107 remote-as 65001
+neighbor 100.0.0.109 remote-as 65001
+neighbor 100.0.0.111 remote-as 65001
+no auto-summary
+
+after config - close telnet cloud
+
+2nd config: Site1:
+
+conf t
+hostname Site1
+no ip domain-lookup
+int fa0/0
+no shut
+ip add 172.16.10.2 255.255.255.0
+exit
+int lo0
+no shut
+ip add 1.1.1.1 255.255.255.255
+exit
+end
+
+
+3rd config: Site2:
+
+conf t
+hostname Site2
+no ip domain-lookup
+int fa0/0
+no shut
+ip add 172.16.20.2 255.255.255.0
+exit
+int lo0
+no shut
+ip add 2.2.2.2 255.255.255.255
+exit
+end
+
+4th config: Site3:
+
+conf t
+hostname Site3
+no ip domain-lookup
+int fa0/0
+no shut
+ip add 172.16.30.2 255.255.255.0
+exit
+int lo0
+no shut
+ip add 3.3.3.3 255.255.255.255
+exit
+end
+
+VMANAGE:
+admin
+admin
+
+Task 1:
+Create Templates
+Configuration > Templates
+Detach Devices
+Pick devices > Detach
+
+Task2:
+Feature > Add template (vEdge Cloud) > System
+Configure the System parameters based on the following:
+o Template Name: VE-System
+o Description: VE-System
+o Console Baud Rate: Global > 9600
+Save
+
+Task3:
+Feature > Add template (vEdge Cloud) > Banner
+Configure the System parameters based on the following:
+o Template Name: VE-Banner
+o Description: VE-Banner
+o Login Banner: Global > Rivan Authorized Users Only!!!
+o MOTD Banner: Global > Welcome to SD-WAN
+Save
+
+Task4:
+Feature > Add template (vEdge Cloud) > VPN
+Configure the System parameters based on the following:
+o Template Name: BR-VE-VPN-VPN0
+o Description: BR-VE-VPN-VPN0
+o VPN: 0
+o Name: Global > Transport VPN
+IPv4 Route
++Symbol
+Prefix: > Global > 0.0.0.0/0
+Next Hop > +Symbol
+Address: Device Specific
+Save
+
+Task5:
+Feature > Add template (vEdge Cloud) > VPN
+Configure the System parameters based on the following:
+o Template Name: BR-VE-VPN-VPN512
+o Description: BR-VE-VPN-VPN512
+o VPN: 512
+o Name: GLobal > MGMT VPN
+Save
+
+Task6:
+Feature > Add template (vEdge Cloud) > VPN Interface Ethernet
+Configure the System parameters based on the following:
+o Template Name: BR-VE-VPNINT-VPN0-G0
+o Description: BR-VE-VPNINT-VPN0-G0
+o Shutdown: Global > No
+o Interface Name: Global > ge0/0
+o IPv4 Address: Device Specific
+o Tunnel Interface: Global > On
+	o Color: Global > biz-internet
+		Allow Service
+		o All: Global > On
+		o SSH: Global > On
+		o NETCONF: Global > On 
+NAT: Global > On
+Save
+
+Task7:
+Feature > Add template (vEdge Cloud) > VPN Interface Ethernet
+Configure the System parameters based on the following:
+o Template Name: BR-VE-VPNINT-VPN512-Eth0
+o Description: BR-VE-VPNINT-VPN512-Eth0
+o Shutdown: Global > No
+o Interface Name: Global >eth0
+o IPv6 Configuration > Dynamic
+Save
+
+Task8:
+Feature > Add template (vEdge Cloud) > BGP
+Configure the System parameters based on the following:
+o Template Name: BE-VE-BGP-VPN0
+o Description: BE-VE-BGP-VPN0
+o Shutdown: Global > No
+o AS Number: Global > 65001
+o Address Family: Global > ipv4-unicast
+Neighbor > +Symbol
+Address: Global > 100.0.0.254
+Remote-AS: Global > 65001
+More
+	Address Family: Global > On
+	Address Family: Global > ipv4-unicast
+	Save
+Save
+
+Task9: Deploy BGP
+Configuration > Templates > Device > Create Template > From Feature Template
+o Device Model > vEdge Cloud
+o Template Name > BR-VE-TEMP
+o Description > BR-VE-TEMP
+
+Basic Information:
+o System > VE-System
+
+Transport & Management VPN:
+o VPN 0 * > BR-VE-VPN-VPN0
+	Additional VPN 0 Templates:
+		+BGP
+		BGP > BE-VE-BGP-VPN0
+o VPN Interface > BR-VE-VPNINT-VPN0-G0
+o VPN 512 > BR-VE-VPN-VPN512
+	Additional VPN 512 Templates:
+		+VPN Interface
+		VPN Interface > BR-VE-VPNINT-VPN512-Eth0
+
+Additional Templates:
+o Banner > VE-Banner
+Create
+
+Deploy:
+Configuration > Templates 
+BR-VE-TEMP > ... > Attach Devices
+Add the 3 vEdges > Attach        BOOM!!!!!!!!!
+
+*For all vEdges* EACHHHHHHHHHHHH
+... > Edit Device Template
+o Address(ip_address_0_0): 100.0.0.254 > Update
+Next > Configure Devices > ✓ Confirm configuration changes on 3 devices > OK
+Refresh! Refresh! Refresh! . wait until Success status shows
+
+@@@how to test BGP:
+Rivan-vEdge1# show ip route bgp
+Rivan-vEdge1# ping 8.8.8.8
+
+But,
+Site1#ping 8.8.8.8
+
+Configuring OSPF:
+
+Task1:
+
+*Site1luz*
+conf t
+router ospf 1
+network 172.16.10.0 0.0.0.255 area 0
+network 1.1.1.1 0.0.0.0 area 0
+
+*Site2viz*
+conf t
+router ospf 1
+network 172.16.20.0 0.0.0.255 area 0
+network 2.2.2.2 0.0.0.0 area 0
+
+*Site3Min*
+conf t
+router ospf 1
+network 172.16.30.0 0.0.0.255 area 0
+network 3.3.3.3 0.0.0.0 area 0
+
+Task2:
+Feature > Add template (vEdge Cloud) > VPN
+o Template Name: BR-VE-VPN-VPN1
+o Description: BR-VE-VPN-VPN1
+o VPN: Global > 1
+o Name: Global > DATA VPN
+IPv4 Route
++Symbol
+Prefix: > Global > 0.0.0.0/0
+VPN
+Enable VPN: Global > On
+Save
+
+Task3:
+Feature > Add template (vEdge Cloud) > VPN Interface Ethernet
+o Template Name: BR-VE-VPNINT-VPN1-G1
+o Description: BR-VE-VPNINT-VPN1-G1
+o Shutdown: Global > No
+o Interface Name: Global > ge0/1
+o IPv4 Address: Device Specific
+Save
+
+Task4:
+Feature > Add template (vEdge Cloud) > OSPF
+o Template Name: BR-VE-OSPF-VPN1
+o Description: BR-VE-OSPF-VPN1
+*Redistribute > +Symbol
+Global > omp
+*Area > +Symbol
+Number: Global > 0
+Interface > +Add
+	Interface Name: Global > ge0/1
+	Save
+*Advanced
+Originate: Global > On
+Always: Global > On
+Save
+
+Deploy:
+Configuration > Templates > Device > ... BR-VE-TEMP > Edit
+*Service VPN > +Service VPN
+o VPN > BR-VE-VPN-VPN1
+	Additional VPN Templates:
+		+OSPF
+		OSPF > BR-VE-OSPF-VPN1
+		+VPN Interface
+		VPN Interface > BR-VE-VPNINT-VPN1-G1
+	Update
+
+*For each vEdges*
+... > Edit Device Template
+
+Rivan-vEdge2:
+o IPv4 Address(vpn_if_ipv4_address): 172.16.20.1/24 > Update
+
+Rivan-vEdge1:
+o IPv4 Address(vpn_if_ipv4_address): 172.16.10.1/24 > Update
+
+Rivan-vEdge3:
+o IPv4 Address(vpn_if_ipv4_address): 172.16.30.1/24 > Update
+Next > Configure Devices > ✓ Confirm configuration changes on 3 devices > OK
+Refresh! Refresh! Refresh! . wait until Success status shows
+
+
+Test:
+Topology > Site1 > ping 8.8.8.8
+Site2 > ping 2.2.2.2
+
+
+Site1#show ip route ospf
+     2.0.0.0/32 is subnetted, 1 subnets
+O E2    2.2.2.2 [110/16777214] via 172.16.10.1, 00:00:11, FastEthernet0/0
+     3.0.0.0/32 is subnetted, 1 subnets
+O E2    3.3.3.3 [110/16777214] via 172.16.10.1, 00:00:11, FastEthernet0/0
+     172.16.0.0/24 is subnetted, 3 subnets
+O E2    172.16.30.0 [110/16777214] via 172.16.10.1, 00:00:11, FastEthernet0/0
+O E2    172.16.20.0 [110/16777214] via 172.16.10.1, 00:00:11, FastEthernet0/0
+O*E2 0.0.0.0/0 [110/1] via 172.16.10.1, 00:00:11, FastEthernet0/0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
